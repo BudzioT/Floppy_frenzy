@@ -1,6 +1,15 @@
-[gd_scene load_steps=4 format=3 uid="uid://dfu82ixuvxjwm"]
+[gd_scene load_steps=7 format=3 uid="uid://dfu82ixuvxjwm"]
 
-[ext_resource type="PackedScene" uid="uid://bkwhaa0ass2dr" path="res://scenes/entities/character/default_character2.tscn" id="1_67jh6"]
+[ext_resource type="PackedScene" uid="uid://u2fsq1wpwe6" path="res://scenes/entities/character/character.tscn" id="1_7p6y0"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_pdvso"]
+
+[sub_resource type="Sky" id="Sky_m8c8s"]
+sky_material = SubResource("ProceduralSkyMaterial_pdvso")
+
+[sub_resource type="Environment" id="Environment_0gq6f"]
+background_mode = 2
+sky = SubResource("Sky_m8c8s")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_wfvcw"]
 size = Vector3(40.2808, 1, 42.7481)
@@ -8,14 +17,14 @@ size = Vector3(40.2808, 1, 42.7481)
 [sub_resource type="BoxMesh" id="BoxMesh_pt7i4"]
 size = Vector3(40.281, 1, 42.7)
 
-[node name="Node3D" type="Node3D"]
+[node name="World" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_0gq6f")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.962453, 3.29832, 22.7358)
 fov = 49.4122
-
-[node name="axe_man2" parent="." instance=ExtResource("1_67jh6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.748611, 13.2511)
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
 
@@ -25,3 +34,6 @@ shape = SubResource("BoxShape3D_wfvcw")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D"]
 mesh = SubResource("BoxMesh_pt7i4")
+
+[node name="Character2" parent="." instance=ExtResource("1_7p6y0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.61359, 35.5755, 10.1902)
