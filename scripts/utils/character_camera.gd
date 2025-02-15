@@ -13,8 +13,8 @@ func _physics_process(delta: float) -> void:
 	for bone in physical_skeleton.get_children():
 		if bone is PhysicalBone3D:
 			spring_arm.add_excluded_object(bone.get_rid())
-		if target:
-			global_position = lerp(global_position, target.global_position, 0.5)
+	if target:
+		global_position = lerp(global_position, target.global_position, 0.5)
 			
 func _input(event: InputEvent) -> void:
 	if Input.is_action_just_pressed("pause"):

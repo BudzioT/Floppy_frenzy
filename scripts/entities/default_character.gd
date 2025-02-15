@@ -15,7 +15,7 @@ var on_floor: bool = false
 @onready var on_floor_right = $"Physical/Armature/Skeleton3D/Physical Bone RLeg2/OnFloorRight"
 
 # Some ragdoll things
-@export var spring_stiffness: float = 4.0
+@export var spring_stiffness: float = 4000.0
 @export var spring_damping: float = 80.0
 @export var max_angular_force: float = 9999.0
 # Skeleton nodes for ragdoll adujstements
