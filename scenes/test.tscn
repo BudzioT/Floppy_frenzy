@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://dfu82ixuvxjwm"]
+[gd_scene load_steps=11 format=3 uid="uid://dfu82ixuvxjwm"]
 
 [ext_resource type="PackedScene" uid="uid://u2fsq1wpwe6" path="res://scenes/entities/character/character.tscn" id="1_7p6y0"]
 
@@ -17,6 +17,15 @@ size = Vector3(40.2808, 1, 42.7481)
 [sub_resource type="BoxMesh" id="BoxMesh_pt7i4"]
 size = Vector3(40.281, 1, 42.7)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_ums40"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_ygwyj"]
+
+[sub_resource type="Skin" id="Skin_kf5ie"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q17pp"]
+metallic = 0.14
+
 [node name="World" type="Node3D"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -33,3 +42,15 @@ mesh = SubResource("BoxMesh_pt7i4")
 
 [node name="Character2" parent="." instance=ExtResource("1_7p6y0")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.61359, 35.5755, 10.1902)
+
+[node name="RigidBody3D" type="RigidBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.03846, 0)
+shape = SubResource("BoxShape3D_ums40")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.04665, 0)
+mesh = SubResource("BoxMesh_ygwyj")
+skin = SubResource("Skin_kf5ie")
+surface_material_override/0 = SubResource("StandardMaterial3D_q17pp")
