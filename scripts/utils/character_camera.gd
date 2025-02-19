@@ -9,7 +9,7 @@ extends Node3D
 var lock_mouse: bool = false
 
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	for bone in physical_skeleton.get_children():
 		if bone is PhysicalBone3D:
 			spring_arm.add_excluded_object(bone.get_rid())

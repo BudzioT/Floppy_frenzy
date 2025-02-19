@@ -53,8 +53,15 @@ func _ready() -> void:
 	# Activate ragdoll, get all bones
 	physical_skeleton.physical_bones_start_simulation()
 	physical_bones = physical_skeleton.get_children().filter(func(x): return x is PhysicalBone3D)
+	await get_tree().process_frame
+	# Reset all physical bones to match the animated skeleton's pose
+	for bone in physical_bones:
+		var target_transform = animated_skeleton.global_transform * animated_skeleton.get_bone_global_pose(bone.get_bone_id())
+		bone.global_transform = target_transform
+		bone.linear_velocity = Vector3.ZERO
+		bone.angular_velocity = Vector3.ZERO
 	
-func _input(event: InputEvent) -> void:
+func _input(_event: InputEvent) -> void:
 	if Input.is_action_just_pressed("ragdoll"):
 		ragdoll_mode = !ragdoll_mode
 		
@@ -72,7 +79,7 @@ func _input(event: InputEvent) -> void:
 		grab_r_joint.node_b = 	NodePath()
 		grabbed_obj = null
 		
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	# Keep arms at direction of camera
 	var r = clamp((camera_pivot.rotation.x * 2) / PI * 2.1, -1, 1)
 	if active_l_arm or active_r_arm:
@@ -145,8 +152,8 @@ func _on_skeleton_3d_skeleton_updated() -> void:
 			bone.angular_velocity += torque * saved_delta
 		
 	
-func hookes_law(displacement: Vector3, current_velocity: Vector3, stiffnes: float, damping: float) -> Vector3:
-	return (stiffnes * displacement) - (damping * current_velocity)
+func hookes_law(displacement: Vector3, current_velocity: Vector3, stiffnes: float, damp: float) -> Vector3:
+	return (stiffnes * displacement) - (damp * current_velocity)
 	
 
 

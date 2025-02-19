@@ -24,11 +24,11 @@ func start_multi_game():
 	self.hide()
 	
 @rpc("any_peer")
-func send_player_info(id, name):
+func send_player_info(id, player_name):
 	if !GameManager.players.has(id):
 		GameManager.players[id] = {
 			"id": id,
-			"name": name
+			"name": player_name
 		}
 	
 	if multiplayer.is_server():
