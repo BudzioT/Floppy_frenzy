@@ -1,6 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://dfu82ixuvxjwm"]
-
-[ext_resource type="PackedScene" uid="uid://u2fsq1wpwe6" path="res://scenes/entities/character/character.tscn" id="1_7p6y0"]
+[gd_scene load_steps=10 format=3 uid="uid://dfu82ixuvxjwm"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_pdvso"]
 
@@ -40,9 +38,6 @@ shape = SubResource("BoxShape3D_wfvcw")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D"]
 mesh = SubResource("BoxMesh_pt7i4")
 
-[node name="Character2" parent="." instance=ExtResource("1_7p6y0")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.61359, 35.5755, 10.1902)
-
 [node name="RigidBody3D" type="RigidBody3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
@@ -54,3 +49,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.04665, 0)
 mesh = SubResource("BoxMesh_ygwyj")
 skin = SubResource("Skin_kf5ie")
 surface_material_override/0 = SubResource("StandardMaterial3D_q17pp")
+
+[node name="SpawnLocations" type="Node3D" parent="."]
+
+[node name="Spawn0" type="Node3D" parent="SpawnLocations" groups=["SpawnLocations"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.4, 10.496)
+
+[node name="Spawn1" type="Node3D" parent="SpawnLocations" groups=["SpawnLocations"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 26.4521, -9.05875)
