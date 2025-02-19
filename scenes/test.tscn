@@ -39,6 +39,7 @@ shape = SubResource("BoxShape3D_wfvcw")
 mesh = SubResource("BoxMesh_pt7i4")
 
 [node name="RigidBody3D" type="RigidBody3D" parent="."]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.03846, 0)
