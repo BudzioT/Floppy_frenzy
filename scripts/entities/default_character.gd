@@ -22,7 +22,7 @@ var on_floor: bool = false
 # Skeleton nodes for ragdoll adujstements
 @onready var physical_skeleton: Skeleton3D = $Physical/Armature/Skeleton3D
 @onready var animated_skeleton: Skeleton3D = $Animated/Armature/Skeleton3D
-@onready var physical_body: PhysicalBone3D = $"Physical/Armature/Skeleton3D/Physical Bone Body"
+@onready var physical_body : PhysicalBone3D = $"Physical/Armature/Skeleton3D/Physical Bone Body"
 var physical_bones: Array = []
 
 @onready var camera_pivot = $CameraPivot
