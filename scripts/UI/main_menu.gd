@@ -22,7 +22,8 @@ func start_multi_game():
 	var scene = load("res://scenes/test.tscn").instantiate()
 	get_tree().root.add_child(scene)
 	self.hide()
-	
+
+# Send info of the given player uing rpc
 @rpc("any_peer")
 func send_player_info(id, player_name):
 	if !GameManager.players.has(id):

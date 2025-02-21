@@ -35,6 +35,7 @@ player_scene = ExtResource("2_3j6t6")
 environment = SubResource("Environment_0gq6f")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -14.415, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.332348, -0.100456, 3.03221)

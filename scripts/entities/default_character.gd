@@ -25,8 +25,9 @@ var on_floor: bool = false
 @onready var physical_body : PhysicalBone3D = $"Physical/Armature/Skeleton3D/Physical Bone Body"
 var physical_bones: Array = []
 
-@onready var camera_pivot = $CameraPivot
+@onready var camera_pivot: Node3D = get_node(str(name))
 @onready var animation_tree = $Animated/AnimationTree
+#@onready var camera = camera_pivot.get_node("SpringArm3D/Camera3D")
 
 # Grabbin
 const GRAB_MODE: bool = 0
@@ -48,8 +49,12 @@ var grabbed_obj = null
 
 var saved_delta: float = 0.0
 
+@onready var multiplayer_synchronizer = $MultiplayerSynchronizer
+
 
 func _ready() -> void:
+	multiplayer_synchronizer.set_multiplayer_authority(str(name).to_int())
+	
 	# Activate ragdoll, get all bones
 	physical_skeleton.physical_bones_start_simulation()
 	physical_bones = physical_skeleton.get_children().filter(func(x): return x is PhysicalBone3D)
@@ -62,22 +67,23 @@ func _ready() -> void:
 		bone.angular_velocity = Vector3.ZERO
 	
 func _input(_event: InputEvent) -> void:
-	if Input.is_action_just_pressed("ragdoll"):
-		ragdoll_mode = !ragdoll_mode
+	if multiplayer_synchronizer.get_multiplayer_authority() == multiplayer.get_unique_id():
+		if Input.is_action_just_pressed("ragdoll"):
+			ragdoll_mode = !ragdoll_mode
+			
+		active_l_arm = Input.is_action_pressed("left_hand")
+		active_r_arm = Input.is_action_pressed("right_hand")
 		
-	active_l_arm = Input.is_action_pressed("left_hand")
-	active_r_arm = Input.is_action_pressed("right_hand")
-	
-	if (not active_l_arm and grab_l) or (ragdoll_mode and grab_l):
-		grab_l = false
-		grab_l_joint.node_a = NodePath()
-		grab_l_joint.node_b = 	NodePath()
-		grabbed_obj = null
-	if (not active_r_arm and grab_r) or (ragdoll_mode and grab_r):
-		grab_r = false
-		grab_r_joint.node_a = NodePath()
-		grab_r_joint.node_b = 	NodePath()
-		grabbed_obj = null
+		if (not active_l_arm and grab_l) or (ragdoll_mode and grab_l):
+			grab_l = false
+			grab_l_joint.node_a = NodePath()
+			grab_l_joint.node_b = 	NodePath()
+			grabbed_obj = null
+		if (not active_r_arm and grab_r) or (ragdoll_mode and grab_r):
+			grab_r = false
+			grab_r_joint.node_a = NodePath()
+			grab_r_joint.node_b = 	NodePath()
+			grabbed_obj = null
 		
 func _process(_delta: float) -> void:
 	# Keep arms at direction of camera
@@ -90,59 +96,62 @@ func _process(_delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	saved_delta = delta
 	
-	# Allow walking and jumping when not beaten down
-	if not ragdoll_mode:
-		walking = false
-		var dir = Vector3.ZERO
-		if Input.is_action_pressed("move_forwards"):
-			dir += animated_skeleton.global_transform.basis.z
-			walking = true
-		if Input.is_action_pressed("move_backwards"):
-			dir -= animated_skeleton.global_transform.basis.z
-			walking = true
-		if Input.is_action_pressed("move_left"):
-			dir += animated_skeleton.global_transform.basis.x
-			walking = true
-		if Input.is_action_pressed("move_right"):
-			dir -= animated_skeleton.global_transform.basis.x
-			walking = true
-		dir = dir.normalized()
-		
-		# Velocity stuff to move
-		physical_body.linear_velocity += dir * speed * delta
-		physical_body.linear_velocity *= Vector3(damping, 1, damping)
-		
-		# Check if jump is allowed (player on floor)
-		on_floor = false
-		if on_floor_left.is_colliding():
-			for i in on_floor_left.get_collision_count():
-				if on_floor_left.get_collision_normal(i).y > 0.5:
-					on_floor = true
-					break
-		if not on_floor:
-			for i in on_floor_right.get_collision_count():
-				if on_floor_right.get_collision_normal(i).y > 0.5:
-					on_floor = true
-					break
-		
-		if Input.is_action_pressed("jump"):
-			if on_floor and can_jump:
-				physical_body.linear_velocity.y += jump_strength
-				jump_timer.start()
-				can_jump = false
-				
-		animation_tree.set("parameters/Walking/blend_amount", walking)
-		
-		# Rotate character based on camera rotation		
-		animated_skeleton.rotation.y = camera_pivot.rotation.y
+	if multiplayer_synchronizer.get_multiplayer_authority() == multiplayer.get_unique_id():
+		# Allow walking and jumping when not beaten down
+		if not ragdoll_mode:
+			walking = false
+			var dir = Vector3.ZERO
+			if Input.is_action_pressed("move_forwards"):
+				dir += animated_skeleton.global_transform.basis.z
+				walking = true
+			if Input.is_action_pressed("move_backwards"):
+				dir -= animated_skeleton.global_transform.basis.z
+				walking = true
+			if Input.is_action_pressed("move_left"):
+				dir += animated_skeleton.global_transform.basis.x
+				walking = true
+			if Input.is_action_pressed("move_right"):
+				dir -= animated_skeleton.global_transform.basis.x
+				walking = true
+			dir = dir.normalized()
+			
+			# Velocity stuff to move
+			physical_body.linear_velocity += dir * speed * delta
+			physical_body.linear_velocity *= Vector3(damping, 1, damping)
+			
+			# Check if jump is allowed (player on floor)
+			on_floor = false
+			if on_floor_left.is_colliding():
+				for i in on_floor_left.get_collision_count():
+					if on_floor_left.get_collision_normal(i).y > 0.5:
+						on_floor = true
+						break
+			if not on_floor:
+				for i in on_floor_right.get_collision_count():
+					if on_floor_right.get_collision_normal(i).y > 0.5:
+						on_floor = true
+						break
+			
+			if Input.is_action_pressed("jump"):
+				if on_floor and can_jump:
+					physical_body.linear_velocity.y += jump_strength
+					jump_timer.start()
+					can_jump = false
+					
+			animation_tree.set("parameters/Walking/blend_amount", walking)
+			
+			# Rotate character based on camera rotation		
+			animated_skeleton.rotation.y = camera_pivot.rotation.y
 		
 
 # Update skeleton for smooth active ragdoll
 func _on_skeleton_3d_skeleton_updated() -> void:
 	if not ragdoll_mode:
+		# Go through every bone besides unactive arms
 		for bone: PhysicalBone3D in physical_bones:
 			if (not active_l_arm and bone.name.contains("LArm")) or (not active_r_arm and bone.name.contains("RArm")):
 				continue
+			# Follow animated skeleton, applying physics to physical one
 			var current_transform: Transform3D = physical_skeleton.global_transform * physical_skeleton.get_bone_global_pose(bone.get_bone_id())
 			var target_transform: Transform3D = animated_skeleton.global_transform * animated_skeleton.get_bone_global_pose(bone.get_bone_id())
 			var diff: Basis = (target_transform.basis * current_transform.basis.inverse())
@@ -162,6 +171,7 @@ func _on_jump_timer_timeout() -> void:
 
 
 func _on_l_grab_area_body_entered(body: Node3D) -> void:
+	# Allow grabbing things other than character itself	
 	if body is PhysicsBody3D and body.get_parent() != physical_skeleton:
 		if active_l_arm and not grab_l:
 			grab_l = true
@@ -171,6 +181,7 @@ func _on_l_grab_area_body_entered(body: Node3D) -> void:
 
 
 func _on_r_grab_area_body_entered(body: Node3D) -> void:
+	# Allow grabbing things other than character itself	
 	if body is PhysicsBody3D and body.get_parent() != physical_skeleton:
 		if active_r_arm and not grab_r:
 			grab_r = true
