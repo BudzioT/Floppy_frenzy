@@ -25,7 +25,7 @@ var on_floor: bool = false
 @onready var physical_body : PhysicalBone3D = $"Physical/Armature/Skeleton3D/Physical Bone Body"
 var physical_bones: Array = []
 
-@onready var camera_pivot: Node3D = get_node(str(name))
+@onready var camera_pivot: Node3D
 @onready var animation_tree = $Animated/AnimationTree
 #@onready var camera = camera_pivot.get_node("SpringArm3D/Camera3D")
 
@@ -55,6 +55,7 @@ var saved_delta: float = 0.0
 func _ready() -> void:
 	multiplayer_synchronizer.set_multiplayer_authority(str(name).to_int())
 	
+	camera_pivot =  get_node(str(name))
 	# Activate ragdoll, get all bones
 	physical_skeleton.physical_bones_start_simulation()
 	physical_bones = physical_skeleton.get_children().filter(func(x): return x is PhysicalBone3D)
@@ -96,9 +97,10 @@ func _process(_delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	saved_delta = delta
 	
-	if multiplayer_synchronizer.get_multiplayer_authority() == multiplayer.get_unique_id():
-		# Allow walking and jumping when not beaten down
-		if not ragdoll_mode:
+	
+	# Allow walking and jumping when not beaten down
+	if not ragdoll_mode:
+		if multiplayer_synchronizer.get_multiplayer_authority() == multiplayer.get_unique_id():
 			walking = false
 			var dir = Vector3.ZERO
 			if Input.is_action_pressed("move_forwards"):
@@ -140,8 +142,8 @@ func _physics_process(delta: float) -> void:
 					
 			animation_tree.set("parameters/Walking/blend_amount", walking)
 			
-			# Rotate character based on camera rotation		
-			animated_skeleton.rotation.y = camera_pivot.rotation.y
+		# Rotate character based on camera rotation		
+		animated_skeleton.rotation.y = camera_pivot.rotation.y
 		
 
 # Update skeleton for smooth active ragdoll
