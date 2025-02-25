@@ -24,10 +24,9 @@ var on_floor: bool = false
 @onready var animated_skeleton: Skeleton3D = $Animated/Armature/Skeleton3D
 @onready var physical_body : PhysicalBone3D = $"Physical/Armature/Skeleton3D/Physical Bone Body"
 var physical_bones: Array = []
-
-@onready var camera_pivot: Node3D
+@onready var camera_pivot: Node3D = $CameraPivot
+@onready var camera: Node3D = $CameraPivot/SpringArm3D/Camera3D
 @onready var animation_tree = $Animated/AnimationTree
-#@onready var camera = camera_pivot.get_node("SpringArm3D/Camera3D")
 
 # Grabbin
 const GRAB_MODE: bool = 0
@@ -49,13 +48,10 @@ var grabbed_obj = null
 
 var saved_delta: float = 0.0
 
-@onready var multiplayer_synchronizer = $MultiplayerSynchronizer
+@export var device_id: int = -1
 
 
 func _ready() -> void:
-	multiplayer_synchronizer.set_multiplayer_authority(str(name).to_int())
-	
-	camera_pivot =  get_node(str(name))
 	# Activate ragdoll, get all bones
 	physical_skeleton.physical_bones_start_simulation()
 	physical_bones = physical_skeleton.get_children().filter(func(x): return x is PhysicalBone3D)
@@ -67,24 +63,32 @@ func _ready() -> void:
 		bone.linear_velocity = Vector3.ZERO
 		bone.angular_velocity = Vector3.ZERO
 	
-func _input(_event: InputEvent) -> void:
-	if multiplayer_synchronizer.get_multiplayer_authority() == multiplayer.get_unique_id():
+func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadMotion or event is InputEventJoypadButton:
+		if event.device == device_id:
+			if Input.is_action_just_pressed("ragdoll"):
+				ragdoll_mode = !ragdoll_mode
+				
+			active_l_arm = Input.get_joy_axis(device_id, JOY_AXIS_TRIGGER_LEFT) > 0.3
+			active_r_arm = Input.get_joy_axis(device_id, JOY_AXIS_TRIGGER_RIGHT) > 0.3
+	else:
 		if Input.is_action_just_pressed("ragdoll"):
 			ragdoll_mode = !ragdoll_mode
-			
+				
 		active_l_arm = Input.is_action_pressed("left_hand")
 		active_r_arm = Input.is_action_pressed("right_hand")
-		
-		if (not active_l_arm and grab_l) or (ragdoll_mode and grab_l):
-			grab_l = false
-			grab_l_joint.node_a = NodePath()
-			grab_l_joint.node_b = 	NodePath()
-			grabbed_obj = null
-		if (not active_r_arm and grab_r) or (ragdoll_mode and grab_r):
-			grab_r = false
-			grab_r_joint.node_a = NodePath()
-			grab_r_joint.node_b = 	NodePath()
-			grabbed_obj = null
+	
+	# Ungrab stuff if needed
+	if (not active_l_arm and grab_l) or (ragdoll_mode and grab_l):
+		grab_l = false
+		grab_l_joint.node_a = NodePath()
+		grab_l_joint.node_b = 	NodePath()
+		grabbed_obj = null
+	if (not active_r_arm and grab_r) or (ragdoll_mode and grab_r):
+		grab_r = false
+		grab_r_joint.node_a = NodePath()
+		grab_r_joint.node_b = 	NodePath()
+		grabbed_obj = null
 		
 func _process(_delta: float) -> void:
 	# Keep arms at direction of camera
@@ -97,12 +101,12 @@ func _process(_delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	saved_delta = delta
 	
-	
 	# Allow walking and jumping when not beaten down
 	if not ragdoll_mode:
-		if multiplayer_synchronizer.get_multiplayer_authority() == multiplayer.get_unique_id():
-			walking = false
-			var dir = Vector3.ZERO
+		walking = false
+		var dir = Vector3.ZERO
+		
+		if device_id == -1:
 			if Input.is_action_pressed("move_forwards"):
 				dir += animated_skeleton.global_transform.basis.z
 				walking = true
@@ -115,32 +119,49 @@ func _physics_process(delta: float) -> void:
 			if Input.is_action_pressed("move_right"):
 				dir -= animated_skeleton.global_transform.basis.x
 				walking = true
-			dir = dir.normalized()
+		else:
+			var gamepad_dir_x = Input.get_joy_axis(device_id, JOY_AXIS_LEFT_X)
+			var gamepad_dir_y = Input.get_joy_axis(device_id, JOY_AXIS_LEFT_Y)
 			
-			# Velocity stuff to move
-			physical_body.linear_velocity += dir * speed * delta
-			physical_body.linear_velocity *= Vector3(damping, 1, damping)
+			if gamepad_dir_y < 0:
+				dir += animated_skeleton.global_transform.basis.z
+				walking = true
+			elif gamepad_dir_y > 0:
+				dir -= animated_skeleton.global_transform.basis.z
+				walking = true
+			if gamepad_dir_x < 0:
+				dir -= animated_skeleton.global_transform.basis.x
+				walking = true
+			elif gamepad_dir_x > 0:
+				dir += animated_skeleton.global_transform.basis.x
+				walking = true
 			
-			# Check if jump is allowed (player on floor)
-			on_floor = false
-			if on_floor_left.is_colliding():
-				for i in on_floor_left.get_collision_count():
-					if on_floor_left.get_collision_normal(i).y > 0.5:
-						on_floor = true
-						break
-			if not on_floor:
-				for i in on_floor_right.get_collision_count():
-					if on_floor_right.get_collision_normal(i).y > 0.5:
-						on_floor = true
-						break
-			
-			if Input.is_action_pressed("jump"):
-				if on_floor and can_jump:
-					physical_body.linear_velocity.y += jump_strength
-					jump_timer.start()
-					can_jump = false
-					
-			animation_tree.set("parameters/Walking/blend_amount", walking)
+		dir = dir.normalized()
+		
+		# Velocity stuff to move
+		physical_body.linear_velocity += dir * speed * delta
+		physical_body.linear_velocity *= Vector3(damping, 1, damping)
+		
+		# Check if jump is allowed (player on floor)
+		on_floor = false
+		if on_floor_left.is_colliding():
+			for i in on_floor_left.get_collision_count():
+				if on_floor_left.get_collision_normal(i).y > 0.5:
+					on_floor = true
+					break
+		if not on_floor:
+			for i in on_floor_right.get_collision_count():
+				if on_floor_right.get_collision_normal(i).y > 0.5:
+					on_floor = true
+					break
+		
+		if Input.is_action_pressed("jump"):
+			if on_floor and can_jump:
+				physical_body.linear_velocity.y += jump_strength
+				jump_timer.start()
+				can_jump = false
+				
+		animation_tree.set("parameters/Walking/blend_amount", walking)
 			
 		# Rotate character based on camera rotation		
 		animated_skeleton.rotation.y = camera_pivot.rotation.y
@@ -165,12 +186,10 @@ func _on_skeleton_3d_skeleton_updated() -> void:
 	
 func hookes_law(displacement: Vector3, current_velocity: Vector3, stiffnes: float, damp: float) -> Vector3:
 	return (stiffnes * displacement) - (damp * current_velocity)
-	
 
 
 func _on_jump_timer_timeout() -> void:
 	can_jump = true
-
 
 func _on_l_grab_area_body_entered(body: Node3D) -> void:
 	# Allow grabbing things other than character itself	

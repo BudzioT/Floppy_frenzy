@@ -1,28 +1,22 @@
 extends Node3D
 
 @export var player_scene: PackedScene
+@onready var spawnpoints = $SpawnLocations.get_children()
+
+var cameras = []
+var player_count: int = 0
 
 
 func _ready() -> void:
-	var index: int = 0
-	var spawns = get_tree().get_nodes_in_group("SpawnLocations")
+	GameManager.connect("player_need_join", spawn_player)
+
+func spawn_player(_device_id: int):
+	if spawnpoints.size() < 1:
+		return
+	player_count += 1
 	
-	# Spawn every player
-	for player in GameManager.players:
-		var current_player = player_scene.instantiate()
-		current_player.name = str(GameManager.players[player].id)
-		current_player.get_node("CameraPivot").name = str(GameManager.players[player].id)
-		current_player.get_node("MultiplayerSynchronizer").set_multiplayer_authority(GameManager.players[player].id)
-		add_child(current_player)
-		
-		# Get spawners and current spawner name
-		var spawn_name = "Spawn" + str(index)
-		var spawn_point = spawns.filter(func(spawn): return spawn.name == spawn_name)	
-		
-		# Try to spawn character	
-		if !spawn_point.is_empty():
-			await get_tree().process_frame
-			
-			# It sucks, but the player spawns at the wrong place, can't fix it, gotta adjust maps ; /
-			current_player.global_position = spawn_point[0].global_position
-		index += 1
+	var player = player_scene.instantiate()
+	if player.is_inside_tree():
+		return
+	add_child(player)
+	player.global_position = spawnpoints[player_count - 1].global_position
